@@ -1,0 +1,3 @@
+# Generate each with: openssl rand -hex 32
+INGEST_TOKEN= # sent by the Next.js proxy as a bearer token
+API_TOKEN= # read-API bearer token and dashboard password; comma-separate several to rotate
