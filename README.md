@@ -50,15 +50,24 @@ username and `API_TOKEN` as the password. It is empty until the first crawler ar
 
 ### 3. Add the proxy to your Next.js app
 
-The integration is a single file. Fetch it into the root of your Next.js 16 app, next to
-`app/`:
+The integration is a single file with a default export supported by both Next.js 15 and 16.
+Place it next to `app/` or `pages/` (inside `src/` if that is where your router lives).
+Run the matching command from that directory:
+
+**Next.js 16 — `proxy.ts`:**
 
 ```sh
-curl -o proxy.ts https://raw.githubusercontent.com/CharlesSOo/AI-Tracker-next/main/nextjs/proxy.ts
+curl -fLo proxy.ts https://raw.githubusercontent.com/CharlesSOo/AI-Tracker-next/main/nextjs-integration/proxy.ts
 ```
 
-On Next.js 15 or earlier, save it as `middleware.ts` and rename the exported function from
-`proxy` to `middleware`. Nothing else changes.
+**Next.js 15 — `middleware.ts`:**
+
+```sh
+curl -fLo middleware.ts https://raw.githubusercontent.com/CharlesSOo/AI-Tracker-next/main/nextjs-integration/proxy.ts
+```
+
+Only the filename differs; do not rename the function or install both files. If your app
+already has middleware/proxy logic, merge the tracking logic into it instead of overwriting it.
 
 Set two server-side environment variables in the app (Vercel project settings, `.env.local`,
 or wherever the app reads its env):
@@ -193,7 +202,7 @@ The crawler table is [`src/crawlers.ts`](src/crawlers.ts). Adding a crawler is o
 ## Repository map
 
 Every tracked file is listed below. The Worker serves the built React dashboard;
-`nextjs/proxy.ts` is copied into the site you want to track, not deployed with the Worker.
+`nextjs-integration/proxy.ts` is copied into the site you want to track, not deployed with the Worker.
 
 ```text
 AI-Tracker-next/
@@ -211,8 +220,8 @@ AI-Tracker-next/
 │       ├── curve.ts            # Converts chart points to smooth cubic Bézier paths with clamped controls.
 │       ├── main.tsx            # React entry, API fetching, time ranges, report mapping, tables and settings dialog.
 │       └── styles.css          # Tailwind/DaisyUI setup, themes and responsive dashboard/dialog styles.
-├── nextjs/
-│   └── proxy.ts                # Copy-paste Next.js integration: filters requests and sends non-blocking ingest POSTs.
+├── nextjs-integration/
+│   └── proxy.ts                # Next.js 15/16 integration: save as middleware.ts/proxy.ts; sends non-blocking ingest POSTs.
 ├── src/
 │   ├── crawlers.ts             # Ordered user-agent rules mapping crawlers to vendors and purposes.
 │   └── index.ts                # Hono API, token auth, input validation, D1 schema/queries, assets and retention cron.

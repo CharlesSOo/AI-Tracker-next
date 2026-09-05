@@ -1,6 +1,6 @@
-// AI Tracker — copy this file to the root of a Next.js 16 app.
-// On Next.js 15 and earlier: rename the file to `middleware.ts` and the
-// exported function from `proxy` to `middleware`. Nothing else changes.
+// AI Tracker — save as `proxy.ts` on Next.js 16 or `middleware.ts` on Next.js 15.
+// Place next to app/ or pages/ (inside src/ if used). The default export works
+// with both versions; no code changes are needed.
 import {
   NextResponse,
   type NextFetchEvent,
@@ -26,7 +26,7 @@ function isIgnoredPath(pathname: string): boolean {
   );
 }
 
-export function proxy(request: NextRequest, event: NextFetchEvent) {
+export default function proxy(request: NextRequest, event: NextFetchEvent) {
   const url = process.env.AI_TRACKER_URL;
   const token = process.env.AI_TRACKER_TOKEN;
   const userAgent = request.headers.get("user-agent") ?? "";

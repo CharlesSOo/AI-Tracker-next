@@ -4,14 +4,19 @@ import { afterEach, expect, test, vi } from "vitest";
 import { AI_CRAWLERS } from "../src/crawlers";
 
 // Exercise the copy-paste integration without installing Next.js in the Worker.
-const source = readFileSync(new URL("../nextjs/proxy.ts", import.meta.url), "utf8");
+const source = readFileSync(new URL("../nextjs-integration/proxy.ts", import.meta.url), "utf8");
 const { code } = await transformWithEsbuild(source, "proxy.ts", { format: "cjs", target: "es2023" });
 const module: { exports: any } = { exports: {} };
 new Function("require", "module", "process", code)(
   () => ({ NextResponse: { next: () => "next" } }), module,
   { env: { AI_TRACKER_URL: "https://tracker.example/", AI_TRACKER_TOKEN: "ingest" } },
 );
-const { proxy, config } = module.exports;
+const { default: proxy, config } = module.exports;
+
+test("exports one default handler compatible with Next.js 15 and 16", () => {
+  expect(typeof proxy).toBe("function");
+  expect(Object.keys(module.exports).sort()).toEqual(["config", "default"]);
+});
 const matcher = new RegExp(`^${config.matcher[0]}$`);
 
 afterEach(() => vi.unstubAllGlobals());

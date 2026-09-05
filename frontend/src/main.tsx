@@ -97,8 +97,11 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
       </div>
       {tab === 'install' ? (
         <div className="settings-body">
-          <p>Fetch the proxy into the root of your Next.js 16 app, next to <code>app/</code>. On Next.js 15, save it as <code>middleware.ts</code> and rename the export to <code>middleware</code>.</p>
-          <pre>{`curl -o proxy.ts https://raw.githubusercontent.com/CharlesSOo/AI-Tracker-next/main/nextjs/proxy.ts`}</pre>
+          <p>Place the integration next to <code>app/</code> or <code>pages/</code> (inside <code>src/</code> if used). Both versions use the same default export; only the filename differs. Merge into existing middleware/proxy logic rather than overwriting it.</p>
+          <p className="snippet-label">Next.js 16</p>
+          <pre>{`curl -fLo proxy.ts https://raw.githubusercontent.com/CharlesSOo/AI-Tracker-next/main/nextjs-integration/proxy.ts`}</pre>
+          <p className="snippet-label">Next.js 15</p>
+          <pre>{`curl -fLo middleware.ts https://raw.githubusercontent.com/CharlesSOo/AI-Tracker-next/main/nextjs-integration/proxy.ts`}</pre>
           <p>Then set two server-side environment variables in the app and deploy it:</p>
           <pre>{`AI_TRACKER_URL=${origin}\nAI_TRACKER_TOKEN=$INGEST_TOKEN`}</pre>
           <p>The proxy reports GET/HEAD requests from bot-like user agents with one non-blocking POST. Only <code>origin + pathname</code>, the user agent, and the platform client IP are sent. Classification happens here, so new crawlers never need an app redeploy.</p>
