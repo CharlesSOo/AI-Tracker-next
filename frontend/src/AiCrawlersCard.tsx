@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bot, Brain, Bug, FileText, Sparkles } from 'lucide-react'
+import { Bot, Brain, Bug, Sparkles } from 'lucide-react'
 import type { AiCrawlers } from './ai-types'
 import MiniLineChart, { type Series } from './MiniLineChart'
 
@@ -51,7 +51,6 @@ export default function AiCrawlersCard({ data }: { data: AiCrawlers }) {
   const rows = selected ? (data.vendors[selected.label] ?? []) : []
   const max = Math.max(1, ...rows.map((r) => r.value))
   const colorOf = new Map(rows.map((r, i) => [r.label, VENDOR_COLORS[r.label] ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length]]))
-  const dates = data.series.map((s) => s.date)
   const inTab = data.byBucket.filter((b) => selected && b.purpose === selected.label)
   const byVendor = new Map<string, Map<string, number>>()
 
@@ -64,9 +63,6 @@ export default function AiCrawlersCard({ data }: { data: AiCrawlers }) {
   const series: Series[] = rows
     .filter((r) => byVendor.has(r.label))
     .map((r) => ({ label: r.label, color: colorOf.get(r.label)!, values: byVendor.get(r.label)! }))
-  if (series.length === 0 && data.series.some((point) => point.hits > 0)) {
-    series.push({ label: 'Crawler requests', color: '#3b82f6', values: new Map(data.series.map((point) => [point.date, point.hits])) })
-  }
 
   return (
     <div className="dashboard-card flex flex-col">
@@ -84,9 +80,6 @@ export default function AiCrawlersCard({ data }: { data: AiCrawlers }) {
             <Bot className="size-3.5" />
             Crawlers
           </a>
-          <a href={DOCS_URL} target="_blank" rel="noreferrer" className="grid size-8 place-items-center rounded-lg text-base-secondary hover:bg-base-200 hover:text-base-content" aria-label="AI crawler documentation">
-            <FileText className="size-4" />
-          </a>
         </div>
       </div>
 
@@ -94,7 +87,7 @@ export default function AiCrawlersCard({ data }: { data: AiCrawlers }) {
         <p className="px-5 py-6 text-sm text-base-secondary">No traffic for this crawler type in this window.</p>
       ) : (
         <div className="grid min-h-80 gap-4 p-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="min-w-0 self-center"><MiniLineChart dates={dates} series={series} /></div>
+          <div className="min-w-0 self-center"><MiniLineChart dates={data.dates} series={series} /></div>
           <div className="flex h-full flex-col gap-0.5 rounded-2xl border border-base-300 p-3 shadow-sm">
             {rows.slice(0, MAX_VENDORS).map((r) => {
               const icon = active === 'answers' ? (VENDOR_ICON[r.label] ?? r.icon) : r.icon

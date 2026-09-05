@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { classifyCrawler } from "../src/crawlers";
 import { InputError, app, normalizeIngest } from "../src/index";
 
@@ -65,6 +65,34 @@ const fakeDb = {
 const env = { DB: fakeDb, INGEST_TOKEN: "ingest", API_TOKEN: "first, second" } as never;
 
 describe("routes", () => {
+  test("new databases use non-reusable event IDs for durable sync cursors", async () => {
+    vi.resetModules();
+    const { app: freshApp } = await import("../src/index");
+    const prepare = vi.fn(fakeDb.prepare);
+    const res = await freshApp.request("/api/report", {
+      headers: { authorization: "Bearer read" },
+    }, { DB: { ...fakeDb, prepare }, API_TOKEN: "read" } as never);
+    expect(res.status).toBe(200);
+    expect(prepare).toHaveBeenCalledWith(expect.stringContaining("id INTEGER PRIMARY KEY AUTOINCREMENT"));
+  });
+
+  test("rejects unauthenticated requests without accessing the database", async () => {
+    vi.resetModules();
+    const { app: freshApp } = await import("../src/index");
+    const prepare = vi.fn(() => { throw new Error("database unavailable"); });
+    const unavailableEnv = { DB: { prepare }, INGEST_TOKEN: "ingest", API_TOKEN: "read" } as never;
+    for (const [path, method] of [["/api/ingest", "POST"], ["/api/report", "GET"], ["/api/requests", "GET"]]) {
+      const res = await freshApp.request(path, { method }, unavailableEnv);
+      expect(res.status).toBe(401);
+    }
+    expect(prepare).not.toHaveBeenCalled();
+  });
+
+  test.each(["9007199254740993", "9".repeat(400), "-1", "1.5", ""])('rejects invalid cursor "%s"', async (cursor) => {
+    const res = await app.request(`/api/requests?after=${cursor}`, { headers: { authorization: "Bearer first" } }, env);
+    expect(res.status).toBe(400);
+  });
+
   test("ingest requires the ingest token", async () => {
     const res = await app.request("/api/ingest", { method: "POST", body: "{}" }, env);
     expect(res.status).toBe(401);

@@ -9,8 +9,8 @@ Worker in your own account, one file in your Next.js app, no SDK, no npm package
 - **Dashboard** with the requests chart per vendor, split into AI answers / AI training /
   Search indexing, plus top pages and recent requests.
 - **JSON read API** so you can pull the same numbers into your own dashboard or database.
-- **Nothing sensitive stored.** Path, user agent, vendor, purpose, optional IP. Never query
-  strings, cookies, bodies, or other headers.
+- **Minimal request data.** Path, user agent, vendor, purpose, optional IP. Never query
+  strings, cookies, bodies, or other headers. Paths and IP addresses may still be sensitive.
 
 Modelled on [datafa.st bot traffic tracking](https://datafa.st/docs/bot-traffic-tracking).
 The ingest payload is compatible with theirs, so their Express, Hono and Cloudflare snippets
@@ -19,7 +19,7 @@ work against this Worker too.
 ## Install
 
 You need a [Cloudflare account](https://dash.cloudflare.com/sign-up/workers-and-pages)
-(free plan is enough) and, for the CLI path, Node.js 20+.
+(free plan is enough) and, for the CLI path, Node.js 22.12+.
 
 ### 1. Deploy the Worker
 

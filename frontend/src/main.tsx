@@ -59,7 +59,6 @@ function toAiCrawlers(report: Report): AiCrawlers {
     vendors[LABEL[p]] = report.vendors
       .filter((v) => v.purpose === p)
       .map((v) => ({ label: v.vendor, value: v.requests }))
-      .sort((a, b) => b.value - a.value)
   }
   const step = report.interval === 'hour' ? 3_600_000 : 86_400_000
   const keys: string[] = []
@@ -69,14 +68,11 @@ function toAiCrawlers(report: Report): AiCrawlers {
   }
   const multiDay = new Set(keys.map((k) => k.slice(0, 10))).size > 1
   const labelOf = new Map(keys.map((k) => [k, bucketLabel(k, report.interval, multiDay)]))
-  const perBucket = new Map<string, number>()
-  for (const row of report.series) perBucket.set(row.date, (perBucket.get(row.date) ?? 0) + row.requests)
-  const series: AiCrawlers['series'] = keys.map((k) => ({ date: labelOf.get(k)!, hits: perBucket.get(k) ?? 0 }))
   const byBucket = report.series.flatMap((r) => {
     const date = labelOf.get(r.date)
     return date ? [{ date, purpose: LABEL[r.purpose] ?? r.purpose, vendor: r.vendor, hits: r.requests }] : []
   })
-  return { totals, vendors, series, byBucket }
+  return { totals, vendors, dates: [...labelOf.values()], byBucket }
 }
 
 
@@ -91,7 +87,7 @@ function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void 
   }, [open])
   const origin = location.origin
   return (
-    <dialog ref={ref} className="settings" onClose={onClose} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+    <dialog ref={ref} aria-label="Install and API settings" className="settings" onClose={onClose} onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="settings-head">
         <div className="tab-group">
           <button className={`tab-pill ${tab === 'install' ? 'is-active' : ''}`} onClick={() => setTab('install')}>Install</button>

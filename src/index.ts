@@ -92,7 +92,7 @@ function parseRange(c: { req: { query: (k: string) => string | undefined } }): {
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     ts INTEGER NOT NULL,
     host TEXT NOT NULL,
     path TEXT NOT NULL,
@@ -116,11 +116,6 @@ function ensureSchema(db: D1Database): Promise<unknown> {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-app.use("/api/*", async (c, next) => {
-  await ensureSchema(c.env.DB);
-  await next();
-});
-
 app.post(
   "/api/ingest",
   bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "body too large" }, 413) }),
@@ -128,6 +123,7 @@ app.post(
   async (c) => {
     const event = normalizeIngest(await c.req.json().catch(() => { throw new InputError("invalid JSON body"); }));
     if (!event) return c.json({ ignored: true });
+    await ensureSchema(c.env.DB);
     await c.env.DB.prepare(
       "INSERT INTO events (ts, host, path, vendor, purpose, user_agent, ip, status, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
     ).bind(Date.now(), event.host, event.path, event.vendor, event.purpose, event.userAgent, event.ip, event.status, event.source).run();
@@ -160,6 +156,7 @@ app.get("/api/report", async (c) => {
   if (interval !== "hour" && interval !== "day") throw new InputError("interval must be hour or day");
   const bucket = interval === "hour" ? "%Y-%m-%dT%H:00:00Z" : "%Y-%m-%d";
   const window = [from, to];
+  await ensureSchema(c.env.DB);
   const [totals, series, pages] = await c.env.DB.batch<any>([
     c.env.DB.prepare(
       "SELECT COUNT(*) AS requests, COUNT(DISTINCT user_agent || '|' || COALESCE(ip, '')) AS uniqueCrawlers, COUNT(DISTINCT path) AS pages FROM events WHERE ts >= ? AND ts < ?",
@@ -201,15 +198,18 @@ app.get("/api/requests", async (c) => {
   if (!Number.isInteger(limit) || limit < 1 || limit > 200) throw new InputError("limit must be between 1 and 200");
   const before = c.req.query("before");
   const after = c.req.query("after");
-  if (before && after) throw new InputError("before and after are mutually exclusive");
+  if (before !== undefined && after !== undefined) throw new InputError("before and after are mutually exclusive");
 
   const cursor = before ?? after;
-  if (cursor !== undefined && !/^\d+$/.test(cursor)) throw new InputError("cursor must be an event id");
+  if (cursor !== undefined && (!/^\d+$/.test(cursor) || !Number.isSafeInteger(Number(cursor)))) {
+    throw new InputError("cursor must be a safe integer event id");
+  }
   const clauses: string[] = [];
   const params: number[] = [];
   if (range) clauses.push("ts >= ? AND ts < ?"), params.push(range.from, range.to);
   if (cursor !== undefined) clauses.push(after ? "id > ?" : "id < ?"), params.push(Number(cursor));
   const where = clauses.length ? ` WHERE ${clauses.join(" AND ")}` : "";
+  await ensureSchema(c.env.DB);
   const { results } = await c.env.DB.prepare(
     `SELECT id, ts, host, path, vendor, purpose, user_agent AS userAgent, ip, status, source FROM events${where} ORDER BY id ${after ? "ASC" : "DESC"} LIMIT ?`,
   ).bind(...params, limit).all<{ id: number; ts: number }>();

@@ -10,7 +10,7 @@ import {
 // Deliberately loose candidate filter. The Worker owns classification, so a new
 // crawler with conventional bot hints is recorded without redeploying the app.
 const BOT_HINTS =
-  /bot|crawler|spider|crawl|gpt|claude|perplexity|bing|applebot|bytespider|ccbot|amazon|amzn|meta-|duckassist|mistral|google-|copilot|grok|kimi|qwen|cohere|msnbot/i;
+  /bot|crawler|spider|crawl|gpt|claude|perplexity|bing|applebot|bytespider|ccbot|amazon|amzn|meta-|duckassist|mistral|google|copilot|grok|kimi|qwen|cohere|msnbot/i;
 const IGNORED_PATH_PREFIXES = ["/api", "/_next", "/_vercel", "/static", "/assets", "/public"];
 const STATIC_EXTENSION =
   /\.(?:avif|bmp|br|cjs|css|csv|eot|gif|gz|ico|jpe?g|js|json|map|mjs|mov|mp3|mp4|mpeg|ogg|otf|pdf|png|svg|tar|tiff?|ttf|wasm|wav|webm|webmanifest|webp|woff2?|xml|zip)$/i;
@@ -63,5 +63,5 @@ export function proxy(request: NextRequest, event: NextFetchEvent) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api(?:/|$)|_next/static(?:/|$)|_next/image(?:/|$)|favicon\\.ico$).*)"],
 };

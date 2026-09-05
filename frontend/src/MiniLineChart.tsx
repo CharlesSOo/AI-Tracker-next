@@ -29,7 +29,7 @@ export default function MiniLineChart({ dates: allDates, series }: { dates: stri
   const n = dates.length
   const x = (i: number) => padL + (i / Math.max(1, n - 1)) * innerW
   const y = (v: number) => padT + innerH - (v / yMax) * innerH
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(yMax * f))
+  const ticks = [...new Set([0, 0.25, 0.5, 0.75, 1].map((f) => Math.round(yMax * f)))]
   const labelEvery = Math.max(1, Math.ceil(n / 7))
   const lines = series
     .filter((s) => dates.some((d) => (s.values.get(d) ?? 0) > 0))
@@ -37,7 +37,7 @@ export default function MiniLineChart({ dates: allDates, series }: { dates: stri
 
   if (n < 2 || lines.length === 0) return null
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Crawler requests over time">
       {ticks.map((t, i) => (
         <g key={i}>
           <line x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="currentColor" className="text-base-300" strokeDasharray="2 4" />
